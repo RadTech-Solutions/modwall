@@ -52,13 +52,13 @@ test('audit mode lets a high-risk mod load, shows its reach, toasts it once', { 
   await start($)
 
   expect(toasts.filter(t => t.startsWith('modwall'))).toEqual([
-    'modwall: new high-risk mod leaky (prompts, network, tool-gate). /modwall to review',
+    'modwall: new high-risk mod leaky (prompts, tool-gate, network). /modwall to review',
   ])
   expect(toasts).toContain('hello')
 
   const table = await run($, '')
   expect(table).toContain('modwall (audit mode), 2 mod(s) seen this session:')
-  expect(table).toMatch(/leaky\s+unversioned\s+high\s+flagged\s+prompts, network, tool-gate/)
+  expect(table).toMatch(/leaky\s+unversioned\s+high\s+flagged\s+prompts, tool-gate, network/)
   expect(table).toMatch(/quiet\s+unversioned\s+low\s+allowed\s+-/)
 
   const log = await run($, 'log')
@@ -128,18 +128,19 @@ test('allow, block, unblock and lists edit the stored lists', { plugins: [quiet]
   await start($)
 
   expect(await run($, 'allow quiet')).toBe(
-    'modwall: allowed quiet@claude-plugin-test at version unversioned. Run /reload-plugins to load it if it was held.',
+    'modwall: allowed quiet@claude-plugin-test at version unversioned only. Run /reload-plugins to load it if it was held.',
   )
   expect(await run($, 'allow ghost')).toContain('no mod named "ghost"')
-  expect(await run($, 'allow other@market 2.0.0')).toContain('allowed other@market at version 2.0.0')
+  expect(await run($, 'allow other@market 2.0.0')).toContain('allowed other@market at version 2.0.0 only')
+  expect(await run($, 'allow any@market')).toContain('allowed any@market at ANY version (*), including future updates')
 
   let lists = await run($, 'lists')
-  expect(lists).toContain('allowlist (2): quiet@claude-plugin-test unversioned; other@market 2.0.0')
+  expect(lists).toContain('allowlist (3): quiet@claude-plugin-test unversioned; other@market 2.0.0; any@market *')
   expect(lists).toContain('blocklist (0): empty')
 
   expect(await run($, 'block quiet')).toContain('blocked quiet@claude-plugin-test')
   lists = await run($, 'lists')
-  expect(lists).toContain('allowlist (1): other@market 2.0.0')
+  expect(lists).toContain('allowlist (2): other@market 2.0.0; any@market *')
   expect(lists).toContain('blocklist (1): quiet@claude-plugin-test')
 
   expect(await run($, 'unblock quiet')).toBe('modwall: unblocked quiet.')
@@ -153,6 +154,8 @@ test('scan validates each installed plugin and reports its footprint', async ($,
   const listed = [
     { id: 'spy@shady', version: '1.0.0', enabled: true, installPath: '/p/spy' },
     { id: 'docs@good', version: '2.0.0', enabled: false, installPath: '/p/docs', mcpServers: { docs: {} } },
+    { id: 'odd@x', installPath: '--help' },
+    { id: 'rel@x', installPath: 'plugins/rel' },
   ]
   const validated = {
     '/p/spy': { contents: [{ type: 'hooks', notes: ['./register.ts hooks: prompt.submit', './register.ts calls: $.http.fetch'] }] },
@@ -171,9 +174,11 @@ test('scan validates each installed plugin and reports its footprint', async ($,
     ['claude', 'plugin', 'validate', '--json', '/p/spy'],
     ['claude', 'plugin', 'validate', '--json', '/p/docs'],
   ])
-  expect(out).toContain('modwall scan: 2 installed plugin(s)')
+  expect(out).toContain('modwall scan: 4 installed plugin(s)')
   expect(out).toMatch(/spy@shady\s+yes\s+high\s+mod: prompts, network/)
   expect(out).toMatch(/docs@good\s+no\s+-\s+MCP: docs/)
+  expect(out).toContain('skipped: folder is not an absolute path ("--help")')
+  expect(out).toContain('skipped: folder is not an absolute path ("plugins/rel")')
 })
 
 test('with nothing loaded after it, the table says so', async ($, on) => {
@@ -181,4 +186,40 @@ test('with nothing loaded after it, the table says so', async ($, on) => {
   wire(on, [])
   await start($)
   expect(await run($, '')).toContain('no other mod loaded after modwall this session')
+})
+
+test('a damaged stored list refuses in allowlist mode and is reported', { options: { mode: 'allowlist' }, plugins: [quiet] }, async ($, on) => {
+  mock.store(on, { allow: { 'quiet@claude-plugin-test': true } })
+  wire(on, [])
+  let message = ''
+  try {
+    await start($)
+  } catch (err) {
+    message = (err as Error).message
+  }
+  expect(message).toBe('quiet: refused by modwall: modwall: its stored lists are damaged, so quiet was not loaded (/modwall lists)')
+})
+
+test('a damaged stored list in audit mode loads the mod, keeps the blocklist and says so', { plugins: [quiet] }, async ($, on) => {
+  const toasts: string[] = []
+  mock.store(on, { allow: 'everything', log: 'nonsense' })
+  wire(on, toasts)
+  await start($)
+  expect(toasts).toContain('hello')
+  expect(toasts.some(t => t.startsWith('modwall: its stored lists are damaged'))).toBe(true)
+  const table = await run($, '')
+  expect(table).toContain('WARNING: stored allow, log are damaged')
+  expect(table).toMatch(/quiet\s+unversioned\s+low\s+check-failed/)
+  expect(await run($, 'allow quiet')).toContain('the stored lists are damaged; not changing them')
+  expect(await run($, 'log')).toContain('the stored log is damaged')
+})
+
+test('the log tolerates bad entries', async ($, on) => {
+  mock.store(on, { log: [null, 7, { at: 'x', name: 3 }, { at: 0, name: 'ok', version: '1', risk: 'low', status: 'allowed', reason: 'fine' }] })
+  wire(on, [])
+  await start($)
+  const log = await run($, 'log')
+  expect(log).toContain('modwall log, last 4 of 4:')
+  expect(log).toContain('(unreadable entry)')
+  expect(log).toContain('1970-01-01T00:00:00.000Z  ok')
 })

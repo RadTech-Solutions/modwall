@@ -2,19 +2,27 @@
 
 export type ModwallRisk = 'low' | 'medium' | 'high'
 
-/** One thing another mod can reach, read off its scanned `uses`. */
 export type ModwallReach =
   | 'prompts'
   | 'network'
   | 'processes'
   | 'env'
-  | 'secrets'
+  | 'env-write'
+  | 'secret-names'
   | 'tool-gate'
+  | 'tool-calls'
   | 'system-prompt'
   | 'file-write'
   | 'file-read'
   | 'other-mods'
+  | 'agents'
+  | 'config'
+  | 'commands'
+  | 'screen'
+  | 'intercepts-api'
   | 'telemetry'
+  | 'wildcard'
+  | 'unknown'
 
 export type ModwallMode = 'audit' | 'ask' | 'allowlist'
 

@@ -1,0 +1,12 @@
+{
+  "name": "modwall",
+  "description": "modwall, a firewall for Claude Code mods",
+  "owner": { "name": "RadTech", "url": "https://radtech.nl" },
+  "plugins": [
+    {
+      "name": "modwall",
+      "source": "./",
+      "description": "A firewall for other mods: shows what each mod can reach as it loads, and audits, holds or refuses it by your policy"
+    }
+  ]
+}

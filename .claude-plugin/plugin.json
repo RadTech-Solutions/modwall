@@ -1,0 +1,20 @@
+{
+  "name": "modwall",
+  "version": "0.1.0",
+  "description": "A firewall for other mods: shows what each mod can reach as it loads, and audits, holds or refuses it by your policy",
+  "author": { "name": "RadTech", "url": "https://radtech.nl" },
+  "homepage": "https://github.com/RadTech-Solutions/modwall",
+  "repository": "https://github.com/RadTech-Solutions/modwall",
+  "license": "MIT",
+  "keywords": ["mods", "security", "firewall", "policy"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Policy mode",
+      "description": "audit: allow every mod, log it, toast new high-risk ones. ask: hold high-risk mods until you run /modwall allow. allowlist: refuse every mod not on the allowlist.",
+      "default": "audit",
+      "options": ["audit", "ask", "allowlist"]
+    }
+  }
+}

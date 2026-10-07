@@ -1,0 +1,7 @@
+.claude/
+CLAUDE.md
+# written by Claude Code each time it loads the mod from a folder
+.claude-plugin/types/
+tsconfig.json
+node_modules/
+.DS_Store

@@ -1,6 +1,6 @@
 {
   "name": "modwall",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A firewall for other mods: shows what each mod can reach as it loads, and audits, holds or refuses it by your policy",
   "author": { "name": "RadTech", "url": "https://radtech.nl" },
   "homepage": "https://github.com/RadTech-Solutions/modwall",

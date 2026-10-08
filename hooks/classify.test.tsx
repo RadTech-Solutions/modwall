@@ -15,6 +15,13 @@ describe('reach and risk: only the known-safe set is low', () => {
     expect(risk(uses, 'me')).toBe('low')
   })
 
+  test('read-only session facts are low, but session.messages stays high', () => {
+    const uses = { events: [], calls: ['session.cwd', 'session.root', 'session.model', 'session.turns', 'session.id', 'session.surfaces', 'session.surface', 'session.version'] }
+    expect(reachOf(uses)).toEqual([])
+    expect(risk(uses)).toBe('low')
+    expect(risk({ events: [], calls: ['session.cwd', 'session.messages'] })).toBe('high')
+  })
+
   test('reading env vars with ordinary names is medium; secret-looking names are high', () => {
     expect(reachOf({ events: [], calls: ['env.get'], env: { reads: ['HOME'], writes: [] } })).toEqual(['env'])
     expect(risk({ events: [], calls: ['env.get'], env: { reads: ['HOME'], writes: [] } })).toBe('medium')
@@ -37,7 +44,8 @@ describe('reach and risk: only the known-safe set is low', () => {
       ['command.run', 'commands'],
       ['ui.copy', 'screen'],
       ['ui.ask', 'screen'],
-      ['session.cwd', 'unknown'],
+      ['session.usage', 'unknown'],
+      ['session.repo', 'unknown'],
       ['audio.speak', 'unknown'],
       ['brand.new', 'unknown'],
     ]
@@ -212,11 +220,11 @@ describe('usesFromReport, on real `claude plugin validate --json` output', () =>
     expect(reachOf(uses, 'modwall')).toEqual(['other-mods', 'processes'])
   })
 
-  test('a status band: pane render and own command are safe; process and cwd are not', () => {
+  test('a status band: pane render, own command and cwd are safe; the process is not', () => {
     const uses = usesFromReport(bandReport)
     expect(uses.events).toEqual(['session.start', 'command.run(own)', 'ui.render(pane)'])
     expect(uses.env).toEqual({ reads: ['HOME'], writes: [] })
-    expect(reachOf(uses, 'relay-band')).toEqual(['processes', 'unknown', 'env'])
+    expect(reachOf(uses, 'relay-band')).toEqual(['processes', 'env'])
     expect(riskOf(reachOf(uses, 'relay-band'))).toBe('high')
   })
 

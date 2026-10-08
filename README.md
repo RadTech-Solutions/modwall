@@ -13,7 +13,7 @@ modwall turns those lists into reach labels and a risk level. The classifier is 
 **Low** (known safe, nothing else used):
 
 * events `session.start`, `session.end`, `turn.start`
-* calls `ui.toast`, `ui.status`, `ui.log`, `ui.notice`, `ui.resolve`, `ui.invalidate`, `ui.blit`, `ui.open`, `ui.close`, `ui.panes`, `ui.scroll`, `ui.focus`, every `clock.*`, `store.get`/`set`/`delete`/`keys` (a mod's store is its own), `state.get`/`set` on the mod's own values, `command.register`
+* calls `ui.toast`, `ui.status`, `ui.log`, `ui.notice`, `ui.resolve`, `ui.invalidate`, `ui.blit`, `ui.open`, `ui.close`, `ui.panes`, `ui.scroll`, `ui.focus`, every `clock.*`, `store.get`/`set`/`delete`/`keys` (a mod's store is its own), `state.get`/`set` on the mod's own values, `command.register`, and the read-only session facts `session.cwd`, `root`, `model`, `turns`, `id`, `surface`, `surfaces` and `version`
 * in `/modwall scan` only: a `command.run` hook the validator reports as answering the mod's own command, and a `ui.render` hook matched to the `AbovePrompt` band or a `Pane`
 
 **Medium**: reads environment variables, and none of their names looks like a secret.

@@ -48,6 +48,15 @@ const SAFE_CALLS = [
   'state.get',
   'state.set',
   'command.register',
+  // read-only session facts: the folder, the model, the surface, the version
+  'session.cwd',
+  'session.root',
+  'session.model',
+  'session.turns',
+  'session.id',
+  'session.surfaces',
+  'session.surface',
+  'session.version',
 ]
 
 const EVENT_GROUPS: readonly [ModwallReach, readonly string[]][] = [
